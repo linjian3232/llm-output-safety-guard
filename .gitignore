@@ -1,0 +1,17 @@
+# Python and tooling
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# Downloaded source data and derived training data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Model checkpoints, adapters, and experiment reports
+artifacts/*
+!artifacts/.gitkeep
+reports/*
+!reports/.gitkeep
