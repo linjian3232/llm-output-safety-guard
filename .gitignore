@@ -3,6 +3,7 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.idea/
 
 # Downloaded source data and derived training data
 data/raw/*
