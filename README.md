@@ -9,7 +9,8 @@
 - 阶段 0：总体计划及[模型文件来源、大小和 SHA256 记录](docs/stage-0-model-files.md)已固定；学习者已准备 7 个本地文件，校验已完成。
 - 阶段 1：学习者已完成 uv 环境安装，并按[本地前向推理说明](docs/stage-1-local-forward.md)在 CPU 上运行中文掩码填空；真实输出和加载警告已记录。
 - 阶段 2：[原始数据审计脚本与操作说明](docs/stage-2-raw-data-audit.md)已完成真实文件验收：SHA256 与固定版本一致，200,000 行均为有效 JSON 对象；审计只读原文，原始数据与报告均未提交。
-- 阶段 3：[数据集制作说明](docs/stage-3-dataset-preparation.md)已完成真实运行验收：生成 800 条二分类样本，train/validation/test 为 640/80/80，归一化文本在集合内及集合间均无重复。训练、评测和 API 尚未建立。
+- 阶段 3：[数据集制作说明](docs/stage-3-dataset-preparation.md)已完成真实运行验收：生成 800 条二分类样本，train/validation/test 为 640/80/80，归一化文本在集合内及集合间均无重复。
+- 阶段 4：[冻结编码器基线](docs/stage-4-frozen-baseline.md)脚本已准备，默认只跑 5 步；等待学习者运行真实数据并观察参数、loss、token 长度和验证结果，之后再运行完整基线。LoRA、最终评测和 API 尚未建立。
 
 ## 仓库与本地资源的边界
 
