@@ -78,5 +78,15 @@ class PrepareDatasetTest(unittest.TestCase):
             self.assertNotIn("한국어 한글", all_output)
 
 
+class ChineseCandidateUnicodeTests(unittest.TestCase):
+    def test_accepts_astral_han_character(self):
+        sys.path.insert(0, str(SCRIPT.parent))
+        try:
+            from prepare_dataset import is_chinese_candidate
+            self.assertTrue(is_chinese_candidate("𠀀"))
+        finally:
+            sys.path.pop(0)
+
+
 if __name__ == "__main__":
     unittest.main()
