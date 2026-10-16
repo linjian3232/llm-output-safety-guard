@@ -11,7 +11,7 @@
 - 阶段 2：[原始数据审计脚本与操作说明](docs/stage-2-raw-data-audit.md)已完成真实文件验收：SHA256 与固定版本一致，200,000 行均为有效 JSON 对象；审计只读原文，原始数据与报告均未提交。
 - 阶段 3：[数据集制作说明](docs/stage-3-dataset-preparation.md)已完成真实运行验收：生成 800 条二分类样本，train/validation/test 为 640/80/80，归一化文本在集合内及集合间均无重复。
 - 阶段 4：[冻结编码器基线](docs/stage-4-frozen-baseline.md)已完成真实 3 epoch、240 步训练与产物核验；按验证 Macro-F1 保存第 3 轮，Accuracy=0.7125、Macro-F1=0.6953，不安全召回率为 47.5%。仅训练 1,538 个分类头参数，训练集 81.72% 的回复超过 128 token，效果解释保留这些局限；test 尚未评测。
-- 阶段 5：[LoRA + 分类头](docs/stage-5-lora.md)真实 5 步试跑已验收：24 个 query/value 目标模块、296,450 个可训练参数，LoRA 与分类头均已更新；验证 Accuracy=0.6625、Macro-F1=0.6620。完整 3 epoch 训练及 adapter 产物尚待学习者运行；最终评测和 API 尚未建立。
+- 阶段 5：[LoRA + 分类头](docs/stage-5-lora.md)已完成真实 3 epoch、240 步训练与 adapter 产物核验；按验证 Macro-F1 保存第 2 轮，Accuracy=0.7750、Macro-F1=0.7744，当前 argmax 下不安全召回率 82.5%、安全误拦率 27.5%。adapter 权重约 1.19 MB，仍需配套基础模型；阈值选择、最终测试评测和 API 尚未完成。
 
 ## 仓库与本地资源的边界
 
