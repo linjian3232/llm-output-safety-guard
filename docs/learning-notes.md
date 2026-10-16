@@ -1,6 +1,6 @@
 # 学习笔记：本地中文模型安全检测与微调
 
-> 更新日期：2026-10-16。阶段 0～4 已完成实际流程验收；阶段 5 LoRA 代码与依赖已准备，真实训练待学习者运行。最终安全效果尚未验收，阶段 6～8 尚未开始。
+> 更新日期：2026-10-16。阶段 0～4 已完成实际流程验收；阶段 5 LoRA 真实 5 步试跑已验收，完整训练待学习者运行。最终安全效果尚未验收，阶段 6～8 尚未开始。
 >
 > 核心目标：通过这次实操，掌握一套能够迁移到同类项目的模型训练流程，具备准备资源、处理数据、运行训练、微调、评测和交付推理服务的基本能力。
 
@@ -775,7 +775,7 @@ Get-Content .\reports\stage-4-baseline.json
 
 仍使用 train 640、validation 80，max_length=128、batch=8；从同一固定基础模型独立开始训练 LoRA + 分类头。先由学习者跑 5 步，核对实际目标模块和更新范围，再运行完整训练。阶段 4 的基线产物保持用于比较，test 不读取。
 
-工程准备已完成，真实 LoRA loss、参数实测值、验证指标与 CPU 耗时尚未产生。
+工程准备和真实 5 步试跑已完成，实际参数、loss、验证指标和耗时已记录；当前下一小目标为完整 3 epoch LoRA 训练与 adapter 保存。
 
 ### 5.2 运行指令及说明
 
@@ -795,7 +795,7 @@ uv sync --locked --no-python-downloads
 
 按锁文件安装新增包，需要可用包源。助手为工程验证已同步本机环境，本机再执行一般只是核对；换机器时则负责重建环境。模型和数据仍从本地加载。
 
-**当前实操：5 步 LoRA 试跑。**
+**已执行：5 步 LoRA 试跑。**
 
 ```powershell
 uv run --no-sync --offline --no-python-downloads python .\scripts\train_lora.py --max-steps 5
@@ -816,7 +816,19 @@ Get-Content .\reports\stage-5-smoke.json
 | `--head-learning-rate` | 0.001 | 分类头更新学习率，与基线一致 |
 | `--seed` / `--threads` | 42 / 4 | 随机种子与 CPU 线程数 |
 
-此时不执行完整训练命令；5 步真实结果核对后再进入下一小目标。新增超参数先固定，不做搜索。
+新增超参数先固定，不做搜索。5 步真实结果已核对，当前可以执行下一小目标的完整训练命令：
+
+```powershell
+uv run --no-sync --offline --no-python-downloads python .\scripts\train_lora.py `
+  --max-steps 0 `
+  --epochs 3 `
+  --batch-size 8 `
+  --output-dir .\artifacts\lora-safety `
+  --report .\reports\stage-5-lora.json
+Get-Content .\reports\stage-5-lora.json
+```
+
+`--max-steps 0` 取消试跑上限；当前数据每轮 80 步，三轮 240 次更新。output-dir 指定实验产物位置，report 保存配置和各轮指标；完整训练按验证 Macro-F1 保存最优 adapter。此命令尚未实际运行。试跑未保存参数，所以本次重新初始化分类头和 LoRA，从固定基础模型重新开始，不续接之前的 5 步。
 
 ### 5.3 我的疑惑点
 
@@ -867,11 +879,35 @@ LoRA 分支：输入 → 小矩阵 A → 小矩阵 B → 调整量
 
 ### 5.6 实测结果与复习入口
 
-**真实 LoRA 试跑尚未执行。** 工程测试使用合成微型 BERT，验证了原有权重不变、LoRA 分支与分类头更新，且保存/重载 adapter 后预测相同；另检查共享训练入口保持基线策略、LoRA 完整保存任务元数据，基础文件未被覆盖。
+**真实 LoRA 5 步试跑已验收（2026-10-16）。** 已核对实际报告的目标模块、可训练名称、更新标志、计数，以及与阶段 4 一致的数据/基础模型指纹。工程合成测试另验证过原有权重不变和 adapter 重载预测一致。
 
-学习者试跑时预期观察 24 个 query/value 目标、296,450 个可训练参数，输入形状仍为 (8,128)、标签 (8,)、输出 (8,2)。核对 LoRA 更新、分类头更新与冻结参数梯度为空，再记录 5 步实际 loss、验证结果和耗时，不能预填效果。
+| 观察项 | 实际结果 | 对当前任务的理解 |
+| --- | --- | --- |
+| 目标模块 | 24 个 query/value 线性层 | 12 个编码层，每层加两个小分支 |
+| 可训练参数 | 294,912 个 LoRA 数值＋1,538 个分类头数值，共 296,450 | 相比基线，编码器能通过 LoRA 分支适配 |
+| 模型总参数 | 102,565,636 | PEFT 包含新增 LoRA 和额外分类头副本，分母不再与基线相同 |
+| 名称示例 | query.lora_A / lora_B、classifier.modules_to_save | 表明训练与保存的计划范围，原有权重仍冻结 |
+| 更新检查 | LoRA=True、分类头=True、冻结梯度均为空=True | 可训练参数确实更新，冻结范围符合当前设计 |
+| 训练样本与形状 | 5 步、40 条；(8,128) → (8,2) | 数据接口和分类任务不变 |
+| 逐步 loss | 0.883473、0.606152、1.031173、0.729524、0.787323 | 不同 batch 之间仍会波动 |
+| 5 步平均训练 loss | 0.807529 | 仅代表此次 40 条训练样本的平均 |
+| 验证结果 | loss=0.662392、Accuracy=0.6625、Macro-F1=0.662025 | 80 条验证数据上的短运行结果 |
+| 耗时 / checkpoint | 约 38.57 秒 / null | 当前未保存真实 adapter，完整训练会重新开始 |
 
-5 步不保存 adapter。后续完整训练将保存到 artifacts/lora-safety/adapter，包括 adapter_config.json、adapter_model.safetensors、task_config.json 与 Tokenizer。task_config 记录标签、max_length、基础模型路径与文件哈希；最终指标留到实际运行后填写。详见[阶段 5 LoRA 说明](stage-5-lora.md)。
+50 个可训练参数张量（48 个 A/B 张量＋分类头 weight/bias）一共包含 296,450 个数值。“参数张量数量”与“可训练数值总量”不是同一个概念。
+
+本次验证混淆矩阵：
+
+| 真值/预测 | unsafe | safe |
+| --- | ---: | ---: |
+| unsafe | 28 | 12 |
+| safe | 15 | 25 |
+
+正确数 28+25=53，53/80=66.25%；不安全召回 28/40=70%，安全误拦 15/40=37.5%。它只是 5 步后的 argmax 结果，不能与已完成 240 步的基线直接下优劣结论，也没有完成业务阈值选择。后续先比较完整训练，再按验证集业务约束评估。
+
+截断比例仍是 train 81.72%、validation 80%。LoRA 改变参数适配方式，不会恢复 Tokenizer 已截掉的后半段内容。
+
+完整训练将保存到 artifacts/lora-safety/adapter，包括 adapter_config.json、adapter_model.safetensors、task_config.json 与 Tokenizer。task_config 记录标签、max_length、基础模型路径与文件哈希；最终指标和真实产物指纹待完整运行后填写。详见[阶段 5 LoRA 说明](stage-5-lora.md)。
 
 <a id="future-stages"></a>
 
