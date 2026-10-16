@@ -12,6 +12,7 @@
 - 阶段 3：[数据集制作说明](docs/stage-3-dataset-preparation.md)已完成真实运行验收：生成 800 条二分类样本，train/validation/test 为 640/80/80，归一化文本在集合内及集合间均无重复。
 - 阶段 4：[冻结编码器基线](docs/stage-4-frozen-baseline.md)已完成真实 3 epoch、240 步训练与产物核验；按验证 Macro-F1 保存第 3 轮，Accuracy=0.7125、Macro-F1=0.6953，不安全召回率为 47.5%。仅训练 1,538 个分类头参数，训练集 81.72% 的回复超过 128 token，效果解释保留这些局限；test 尚未评测。
 - 阶段 5：[LoRA + 分类头](docs/stage-5-lora.md)已完成真实 3 epoch、240 步训练与 adapter 产物核验；按验证 Macro-F1 保存第 2 轮，Accuracy=0.7750、Macro-F1=0.7744，当前 argmax 下不安全召回率 82.5%、安全误拦率 27.5%。adapter 权重约 1.19 MB，仍需配套基础模型；阈值选择、最终测试评测和 API 尚未完成。
+- 阶段 6：[验证集阈值选择说明](docs/stage-6-evaluation.md)和入口已准备，等待学习者实际重载基线与 LoRA、在 validation 上选择误拦≤10% 的阈值。当前不读取 test；最终测试与 API 尚未完成。
 
 ## 仓库与本地资源的边界
 
