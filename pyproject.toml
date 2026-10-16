@@ -3,6 +3,7 @@ name = "llm-output-safety-guard"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "peft>=0.17,<1",
     "torch>=2.6,<3",
     "transformers>=4.57,<5",
 ]
